@@ -1,7 +1,7 @@
 axios.get('https://api.le-systeme-solaire.net/rest/bodies/')
 
     .then((response) => {
-        const bodies = response.bodies.bodies; 
+        const bodies = response.data.bodies; 
         // o const aqui está criando a variável bodies que vem a ser um array de todos os dados da lista de corpos celestes da API (ex1 - L74)
 
 
