@@ -3,7 +3,7 @@
 axios.get('https://api.le-systeme-solaire.net/rest/bodies/')
 
     .then((response) => {
-        const bodies = response.data.bodies; 
+        const bodies = response.data.bodies;
         // o const aqui está criando a variável bodies que armazena um array de todos os dados da lista de corpos celestes da API, dados esses que foram puxados pelo axios.get com a URL da API e o caminho response.data.bodies.
         console.log(1, bodies); // aqui apenas a exposição do array coletado acima
         const planets = ex2(bodies);
@@ -20,8 +20,8 @@ axios.get('https://api.le-systeme-solaire.net/rest/bodies/')
         ex10(bodies);
         ex11(bodies);
         ex12(planets);
-        const bodyTypesFiltered = ex13(bodies);
-        ex14(bodyTypesFiltered);
+        const bodyTypes = ex13(bodies); // a const bodyTypes é um array dos corpos celestes classificados por tipo (array construído na função 13) 
+        ex14(bodyTypes);
         ex15(planets);
         ex16(planets);
         ex17(bodies, 'Pluto', 'Saturn');
@@ -75,7 +75,7 @@ function ex6(planets) {
 // 7. Informações Concatenadas: Use o método join para criar uma string que contenha os nomes de todos os planetas do array, separados por vírgulas.
 // ● Detalhes: A string resultante deve ser algo como "Mercúrio, Vênus, Terra, Marte,...".
 function ex7(planets) {
-    const concat = planets.sort((a, b) => a.perihelion - b.perihelion) // aqui o .sort ordenou os planetas por sua distância do sol, do mais perto ao mais longe (perihelion é a menor distância que a órbita de um planeta alcança do sol - aphelion é a maior distância - peri de próximo, no entorno, e apo de longe (em grego)) 
+    const concat = planets.sort((a, b) => a.semimajorAxis - b.semimajorAxis) // aqui o .sort ordenou os planetas por sua distância do sol, do mais perto ao mais longe (perihelion é a menor distância que a órbita de um planeta alcança do sol - aphelion é a maior distância - peri de próximo, no entorno, e apo de longe (em grego) - semimajorAxis éa distância média da elipse orbital de um planeta) 
         .map(planet => planet.name) // o .map está aplicado ao sort extraindo apenas os nomes
         .join(', '); // o .join está aplicado ao map e faz com que o array se torne uma única string onde cada elemento se encontra em série e separados pela sua definição, neste caso a ', '
     console.log(7, concat);
@@ -92,7 +92,7 @@ function ex8(planets) {
 function ex8b(planets) {
     const mass = planets.sort((a, b) => a.meanRadius - b.meanRadius)
         .map(planet => planet.mass)
-        .slice(0,5)
+        .slice(0, 5)
     console.log(mass)
 }
 
@@ -103,68 +103,50 @@ function ex9(planets) {
     console.log(9, planetas);
 }
 
-
-
-
-
-
-
-
-
-
 // 10. Ordem de descobrimento: Encontre e imprima na tela todos nomes dos astros e suas respectivas datas de descoberta (os que tiverem), ordenando-os do mais recente ao mais antigo.
 function ex10(bodies) {
-    const bodys = bodies
-        .filter(body => body.discoveryDate !== '')
-        .sort((a, b) => {
-            const numA = new Date(a.discoveryDate.split('/').reverse().join('-'));
-            const numB = new Date(b.discoveryDate.split('/').reverse().join('-'));
-
-            return numB - numB;
-        })
-
-    console.log(10, bodys);
+    const ordemData = bodies
+        .filter(body => body.discoveryDate !== '') // filtrou só os que possuem discoveryDate diferentes de string vazia
+        .sort((a, b) => a.discoveryDate.split('/').reverse().join() < b.discoveryDate.split('/').reverse().join() ? -1 : 1)
+    // o .split pegou a string 07/01/1610 e criou um array ['07', '01', '1610']. O .reverse inverteu a ordem dos elementos desse array deixando-o ['1610', '01', '07']. O .join transformou o array revertido de volta numa string como os elementos escritos em série, se tornando '16100107'. O ternário testou se o elemento "a" é menor que o "b" e retornou -1 quando sim e 1 quando não. Com o -1 e o 1 o sort encadeia comparação em comparação trazendo os -1 para frente e pondo os 1 para trás.
+    console.log(10, ordemData);
 }
 
-// 11. Encontrando Astro: Faça uma função que recebe um nome, e retorna a distancia, a massa, gravidade e densidade
+// 11. Encontrando Astro: Faça uma função que recebe um nome, e retorna a distancia, a massa, gravidade e densidade.
 function ex11(bodies) {
     const name = 'Earth';
     // const name = prompt('Insira o nome do astro (inglês):');
+    if (!name) { return null; }
 
-    if (!name) {
-        return null;
-    }
+    const body = bodies.find(body => body.englishName === name); // o .find buscou entre os bodies qual possui o nome buscado
 
-    const body = bodies.find(body => body.englishName === name);
-
-    const info = {
+    const info = { // a const info cria um objeto (info) que possui as propriedades descritas abaixo e extraídas do body encontrando pelo find
         name: body.englishName,
         distance: body.semimajorAxis,
-        mass: body.mass.massValue * 10 ^ body.mass.massExponent,
+        mass: body.mass.massValue * 10 ** body.mass.massExponent,
         gravity: body.gravity,
         density: body.density
     };
 
     console.log(11);
-    console.table(info);
+    console.table(info); //console table imprime uma tabela no console ao invés de um texto linear
 }
 
-// 12. Filtro de Temperatura: econtre os planetas que tem uma temperatura de 8 a 30 graus celsius. Cuidado que o AvgTemp está na escala Kelvin. Ordene-os do mais frio ao mais quente.
+// 12. Filtro de Temperatura: encontre os planetas que tem uma temperatura de 8 a 30 graus Celsius. Cuidado que o AvgTemp está na escala Kelvin. Ordene-os do mais frio ao mais quente.
 function ex12(bodies) {
     const temperaturePlanets = bodies.filter(planet => (planet.avgTemp - 273) >= 8 && (planet.avgTemp - 273) <= 30);
-
-    console.log(temperaturePlanets);
+    console.log(12, temperaturePlanets);
 }
 
 // 13. Separando Planetas. Faça uma função que retorna um objeto, separando todos os planetas pelo seu tipo. bodyType
 function ex13(bodies) {
     const bodyTypes = {};
     bodies.forEach(body => {
-        if (bodyTypes[body.bodyType]) {
-            bodyTypes[body.bodyType].push(body)
+        if (bodyTypes[body.bodyType]) { // verifica se o objeto bodyTypes já possui uma propriedade equivalente ao bodyType do body verificado na iteração
+            bodyTypes[body.bodyType].push(body) // se sim, adiciona o body ao array da propriedade equivalente ao seu bodyType
         } else {
-            bodyTypes[body.bodyType] = [body,];
-        }
+            bodyTypes[body.bodyType] = [body,]; // se não, adiciona uma nova propriedade com o nome do bodyType e atribui a ela um array com o body da iteração
+        } // dessa forma será adicionados todos os bodyTypes encontrados  como propriedade que conterão arrays com cada body pertencente aos tipos encontrados, sem causar repetição das propriedades.
     });
 
     console.log(13, bodyTypes);
@@ -172,98 +154,92 @@ function ex13(bodies) {
 }
 
 // 14. Ordenação Complexa: Use sort e slice para ordenar os planetas primeiro por tipo e depois por tamanho, pegando os 3 maiores de cada tipo.
-function ex14(bodies) {
-    const OrderBySize = {};
+function ex14(bodyTypes) {
+    const orderBySize = {};
 
-    // Acessar os arrays do objeto dinamicamente
-    for (const bodyType in bodies) {
-
-        // Ordenação do array
-        const filtered = bodies[bodyType].sort((a, b) => b.meanRadius - a.meanRadius).slice(0, 3);
-
-        OrderBySize[bodyType] = filtered;
+    for (const bodyType in bodyTypes) { // o "for in" aqui percorre cada propriedade do objeto bodyTypes
+        orderBySize[bodyType] = bodyTypes[bodyType].sort((a, b) => b.meanRadius - a.meanRadius).slice(0, 3); // o slice está aplicado ao sort e pega apenas os 3 primeiros elementos sorteados. o .sort ordena por tamanho cada elemento de cada propriedade do objeto bodyTypes e em cada iteração do "for in", o orderBySize recebe uma propriedade de cada BodyType com seus 3 maiores body
     }
-
-    console.log(14, OrderBySize);
+    console.log(14, orderBySize);
 }
 
 // 15. Encontrando planetas orbitados. Encontre todos os planetas que são orbitados por pelo menos um corpo celeste. Imprima na tela o nome do planeta e seus orbitadores.
-function ex15(bodies) {
-    const orbitedPlanets = [];
+function ex15(planets) {
+    const orbitedPlanets = {};
 
-    console.log(15);
-    bodies.forEach(planet => {
-        if (planet.moons !== null) {
-            console.log(planet.englishName);
-
-            console.log(planet.moons.map(moon => moon.moon).join(', '));
+    planets.forEach(planet => { // o forEach percorreu cada planeta do planets e 
+        if (planet.moons !== null) { // verificou se possuíam alguma lua
+            orbitedPlanets[planet.englishName] = planet.moons; // se sim, criou uma propriedade de cada planeta para objeto orbitedPlanets e atribuiu o array moons do planeta à propriedade
         }
     });
+    console.log(15, orbitedPlanets);
 }
 
 // 16. Média da Massa dos Planetas: Use o método reduce para calcular a média da massa de todos os planetas e imprimir o resultado.
-function ex16(bodies) {
-    const totalMass = bodies.reduce((totalMass, planet) => totalMass + (planet.mass.massValue * 10 ^ planet.mass.massExponent), 0)
-    const med = totalMass / bodies.length;
-
-    console.log(16, med)
+function ex16(planets) {
+    const totalMass = planets.reduce((totalMass, planet) => totalMass + (planet.mass.massValue * 10 ** planet.mass.massExponent), 0)
+    const avgMass = totalMass / planets.length; // somou todas as massas dos planetas pelo reduce e dividiu-se pelo total de elementos do array planets para se obter a média das massas
+    console.log(16, avgMass)
 }
 
 // 17. Calcule a distância entre Saturno e Plutão. Utilize o perihelion e o aphelion para calcular a menor distância possível entre os planetas
-function ex17(bodies, firstPlanetName, secondPlanetName) {
-    const planets = [bodies.find(body => body.englishName === firstPlanetName),
-    bodies.find(body => body.englishName === secondPlanetName)
-    ];
-
-    if (!(planets[0].aphelion > planets[1].aphelion)) {
-        planets.reverse;
-    }
-    const closerDisntace = planets[0].perihelion - planets[1].aphelion;
-
-    console.log(17, closerDisntace)
+function ex17(bodies, first, second) { // os nomes de saturno e plutão foram passados como argumento na chamada da função, atribuídos a 'first' e 'second'
+    const planetOne = bodies.find(body => body.englishName === first)
+    const planetTwo = bodies.find(body => body.englishName === second) // foi utilizado .find para encontrar os bodies com os respectivos nomes
+    const closerDistance =
+        planetOne.aphelion > planetTwo.aphelion ? // aqui o ternário verificou qual era o mais distante
+        planetOne.perihelion - planetTwo.aphelion : // fez-se a menor distância (perihelion) do mais distante menos a maior distância (aphelion) do menos distante
+        planetTwo.perihelion - planetOne.aphelion
+    console.log(17, `A menor distância entre ${first} e ${second} é ${closerDistance}`)
 }
 
 // 18. Planetas com Luas: liste todos os planetas que têm uma ou mais luas. Imprima na tela o planeta, e quantas luas ele tem.
-function ex18(bodies) {
-    const orbitedPlanets = [];
-
+function ex18(planets) {
     console.log(18);
-    bodies.forEach(planet => {
-        if (planet.moons !== null) {
-            console.log(planet.englishName + ' has ' + planet.moons.length + ' moons.');
+    planets.forEach(planet => { // o forEach percorreu cada planetas de planets
+        if (planet.moons !== null) { // verificou-se os que tinham luas
+            console.log(planet.englishName + ' has ' + planet.moons.length + ' moons.'); // stringou-se cada nome de planeta + sua quantidade de luas (planet.moons.length)
         }
     });
 }
 
 // 19. O Desafio Final em Manipulação de Dados e Cálculos
 // Análise Estatística do Sistema Solar: Utilize os métodos para realizar uma análise estatística completa dos planetas do sistema solar.
-// - Crie um novo array que contém apenas planetas (excluindo luas, asteroides, etc.).
-// - Crie um novo array que contém apenas as massas dos planetas. - Ordene o array de massas em ordem crescente.
-// - Calcule a mediana das massas dos planetas. A mediana é o valor do meio em um conjunto de dados ordenado. Se o conjunto tem um número ímpar de observações, a mediana é o valor do meio. Se o conjunto tem um número par de observações, a mediana é a média dos dois valores do meio.
-// - Encontrar Planeta Mais Próximo da Mediana: encontre o planeta cuja massa é mais próxima da mediana calculada.
-function ex19(bodies) {
-    const planetMasses = bodies.map(planet => (planet.mass.massValue * 10 ^ planet.mass.massExponent)).sort();
+// -a) Crie um novo array que contém apenas planetas (excluindo luas, asteroides, etc.).
+// -b) Crie um novo array que contém apenas as massas dos planetas. - Ordene o array de massas em ordem crescente.
+// -c) Calcule a mediana das massas dos planetas. A mediana é o valor do meio em um conjunto de dados ordenado. Se o conjunto tem um número ímpar de observações, a mediana é o valor do meio. Se o conjunto tem um número par de observações, a mediana é a média dos dois valores do meio.
+// -d) Encontrar Planeta Mais Próximo da Mediana: encontre o planeta cuja massa é mais próxima da mediana calculada.
+function ex19(planets) {
+    console.log(19)
+    // a)
+    console.log('a)', planets) // simplesmente imprimi no console o array filtrado de planetas já existente desde o exercício 2
 
-    let median;
-    if (planetMasses.length % 2 == 0) {
-        const x = planetMasses.length / 2;
-        const y = x - 1;
-        median = (planetMasses[x] + planetMasses[y]) / 2;
+    // b)
+    const planetMasses = planets.map(planet => (planet.mass.massValue * 10 ** planet.mass.massExponent)).sort((a, b) => a - b);
+    console.log('b)', planetMasses) // acima obtive a massa de todos os planetas e a ordenei pelo sort da menor para a maior
 
-    } else {
-        median = planetMasses[Math.floor(planetMasses.length / 2)];
-    }
+    // c)
+    let median; // variável vazia da mediana que receberá valor após o condicional if/else
+    if (planetMasses.length % 2 === 0) { // se o length dos planetMasses for par (se resta 0 de sua divisão por 2)
+        const x = planetMasses.length / 2; // divide o length por 2 e atribui o valor a 'x'
+        const y = x - 1;                   // subtrai 1 de x e atribui a 'y' fazendo com que y equivalha ao primeiro dos dois elementos do meio do array e x ao segundo
+        median = (planetMasses[x] + planetMasses[y]) / 2; // soma os dois elementos do meio e divide por 2
+    } else { median = planetMasses[Math.floor(planetMasses.length / 2)]; } // se o length não for par, basa encontra o elemento do meio, divide-se o length por 2 e arredonda-se para baixo
+    console.log('c)', median)
 
-    let aproachValue = Number.MAX_SAFE_INTEGER;
-    let index;
+    // d) - Teste do planeta cuja massa é a mais próxima da mediana dos planetas
+    let closerValue = Infinity; // usei o 'Infinity' para representar um valor maior que qualquer outro numérico expresso
+    let index; 
+
     planetMasses.forEach((mass, i) => {
-        const value = Math.abs(mass - median);
-        if (value < aproachValue) {
-            aproachValue = value;
-            index = i;
+        const value = Math.abs(mass - median); // para cada mass, reduz-se dela o valor da mediana. O Math.abs converte para positivo caso resulte negativo
+        if (value < closerValue) { // se o valor da massa - mediana for menor que o closerValue (na primeira iteração será certamente, já que está se comparando ao Infinity)
+            closerValue = value; // troca-se o valor da let closerValue e na iteração seguinte este novo valor será comparado com o próximo
+            index = i; // atribui-se à let index o índice da iteração que substituiu o valor de closerValue pelo do value. Após todas iterações, o index manterá a referencia daquela que obteve o menor valor de value
         }
     });
 
-    const planetAproachMass = bodies.find(planet => (planet.mass.massValue * 10 ^ planet.mass.massExponent) === planetMasses[index]);
-    console.log(19, planetAproachMass)
+    const closerMedianMassPlanet = planets.find((planet) => (planet.mass.massValue * 10 ** planet.mass.massExponent) === planetMasses[index]) // encontra-se o planeta que possui a massa que obteve o menor resultado no teste de proximidade da mediana
+    console.log('d)', `O planeta cuja massa é mais próxima da mediana das massas é ${closerMedianMassPlanet.englishName} e sua massa é ${planetMasses[index]}`)
 }
+
